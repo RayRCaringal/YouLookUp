@@ -3,24 +3,26 @@
 const url = window.location.href;
 const playListId = url.substring(url.indexOf('=')+1)
 const myStorage = window.localStorage;
-const playlist = myStorage.getItem(playListId)
-console.log(playlist)
 
-//Check if list is stored 
-if(playlist == null){
+chrome.storage.sync.get(playListId, (playlist) =>{
+  
+    console.log(playlist)
+    //Check if list is stored 
+    if(Object.keys(playlist).length === 0 && playlist.constructor === Object){
 
-    //Prompt user to watch playlist 
-    if(confirm("This playlist is not being watched would you like to watch this playlist?")){
-        myStorage.setItem(playListId, JSON.stringify(createPlaylist()))
-    }else{
-        myStorage.setItem(playListId, "Don't Watch");
-    }
-
-}else if(playlist !== "Don't Watch"){
+         //Prompt user to watch playlist 
+        if(confirm("This playlist is not being watched would you like to watch this playlist?")){
+            chrome.storage.sync.set({[playListId] : createPlaylist()})
+        }else{
+            chrome.storage.sync.set({[playListId]: "Don't Watch"})
+        }
+    }else if(playlist !== "Don't Watch"){
     //Check for updates 
-    const prevList = JSON.parse(playlist)
-    checkForUpdates(prevList);
-}
+    //const prevList = playlist)
+    checkForUpdates(playlist);
+ }
+})
+
 
 /**
  * Checks stored list and current list for updates, if there are changes it updates the list 
@@ -34,14 +36,14 @@ function checkForUpdates(prevList){
     //Item has been added 
     if(curr.length > prev.length){ 
         const additions = curr.filter(video => !prev.includes(video))
-        additions.forEach(newItems =>   prevList[newItems] = currentList[newItems])
-        myStorage.setItem(_URL,prevList)
+        additions.forEach(newItems => prevList[newItems] = currentList[newItems])
+        chrome.storage.sync.set({[playListId] : prevList})
     }
     //Item has been deleted (Keep Track of Deletions as a Future Option)
     else if(curr.length < prev.length){
         const deletions = prev.filter(video => !curr.includes(video))
         deletions.forEach(deletedItem => delete prevList[deletedItem])    
-        myStorage.setItem(_URL,prevList)
+        chrome.storage.sync.set({[playListId] : prevList})
     }   
 }
 
@@ -59,7 +61,11 @@ function createPlaylist(){
     return playList;
 }
 
+
+
 //CHROME SPECIFIC 
+
+/*
 
 //Sends chrome the current stored list 
 chrome.runtime.sendMessage({
@@ -81,3 +87,4 @@ chrome.runtime.sendMessage({
 chrome.runtime.onMessage.addListener(function(request){
    console.log("Clear Request")
 });
+*/

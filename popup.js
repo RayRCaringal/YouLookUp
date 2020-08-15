@@ -3,6 +3,9 @@
 //const myStorage = window.localStorage;
 //let missing = true;
 
+chrome.storage.sync.clear()
+/*
+
 let playList
 
 // Creates new tabs and shows the missing videos.
@@ -116,10 +119,11 @@ function createPlaylist(){
 /**
  Returns an array of video ids
  @param videoElements - an array of video DOM elements
-*/
+
 function getVideoIds(videoElements) {
     var videoIds = videoElements.map((video) => video.search);
     videoIds = videoIds.map((url) => url.substring(url.indexOf("=") + 1, url.indexOf("&")));
     return videoIds;
 }
 
+*/
