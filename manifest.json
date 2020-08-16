@@ -13,9 +13,6 @@
     "default_popup": "popup.html",
     "default_title": "Find Deleted Videoes."
   },
-  "background": {
-    "scripts": ["background.js"]
-  },
   "permissions": [
     "tabs",
     "storage"

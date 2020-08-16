@@ -5,8 +5,6 @@ const playListId = url.substring(url.indexOf('=')+1)
 const myStorage = window.localStorage;
 
 chrome.storage.sync.get(playListId, (playlist) =>{
-  
-    console.log(playlist)
     //Check if list is stored 
     if(Object.keys(playlist).length === 0 && playlist.constructor === Object){
 
@@ -62,29 +60,86 @@ function createPlaylist(){
 }
 
 
-
-//CHROME SPECIFIC 
-
-/*
-
-//Sends chrome the current stored list 
-chrome.runtime.sendMessage({
-    from: 'content',
-    target: 'background',
-    url: window.location.href,
-    myStorage: JSON.parse(myStorage.getItem(playListId))
+chrome.runtime.onMessage.addListener((request)=> {
+    if(request.from == 'popup' && request.target == 'content'){
+        switch(request.type){
+            case "find":
+                console.log("It has been requested that we find deleted ")
+                break
+            case "watch": 
+                break
+            case "stop":
+                break
+            case "clear":
+                console.log("It has been requested that this entry is cleared")
+                break
+        }
+    }
+   
 });
 
-chrome.runtime.sendMessage({   
-    from: 'content',
-    target: 'popup',
-    url: window.location.href,
-    pId: playListId,
-    list: playlist,
-    myStorage: JSON.parse(myStorage.getItem(playListId))})
 
-// Clears missing videos from local storage for current URL, Clears from HTML
-chrome.runtime.onMessage.addListener(function(request){
-   console.log("Clear Request")
-});
+function findDeletedVideos() {
+    try {
+        //Select all Videos in the playlist
+        //There is an issue with this because it's for popup    
+        let videos = document.querySelectorAll("a.ytd-playlist-video-renderer");
+        console.log(videos)
+
+        if (videos) {
+            const popup = document.getElementById("videoes")
+            //Idk why this is here 
+            const deletedVideos = Array.from(videos).filter((e)=>{     
+                try{
+                    let title = e.innerText;
+                }catch (error){
+                    console.log("Error title not found", error)
+                }
+            });
+            console.log("Deleted.length = " + deletedVideos.length)
+            if(deletedVideos.length > 0){
+                console.log("Deleted")
+                const videoIDs = getVideoIds(deletedVideos)
+                const savedList = JSON.parse(myStorage.getItem(playListId))
+                videoIDs.forEach((ID) =>{
+                    popup.innerHTML += "<li>" + savedList[ID] + "<div class=\"remove\"> Remove </div></li>"
+                })
+            }else{
+                if(missing){
+                    popup.innerHTML += "There are no missing videoes"
+                    missing = false;
+                }else{
+                    console.log("Already clicked")
+                }
+            }   
+        } else {
+            //This Shouldn't Happen As There is Usually "Don't Watch within the playlist"
+            console.log("No videos found in this playlist");
+        }
+    } catch (error) {
+        console.error("Error retrieving deleted videos from playlist", error);
+    }
+}
+
+
+//Filters non-deleted videos out of an array of video DOM elements
+function hasDeletion(value, index, array) {
+    let title = value.innerText;
+    if (!title) {
+        console.log("returning")
+        return false;
+    }
+    console.log(title)
+    // this will break if youtube changes conventions
+    return (title.toLowerCase() == "[deleted video]");
+}
+
+/**
+ Returns an array of video ids
+ @param videoElements - an array of video DOM elements
 */
+function getVideoIds(videoElements) {
+    var videoIds = videoElements.map((video) => video.search);
+    videoIds = videoIds.map((url) => url.substring(url.indexOf("=") + 1, url.indexOf("&")));
+    return videoIds;
+}
