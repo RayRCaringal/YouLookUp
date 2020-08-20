@@ -1,12 +1,25 @@
 
 // Creates new tabs and shows the missing videos.
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
     const missing = document.getElementById('missing');
     const reset = document.getElementById('reset')
+
+    if(missing){
+        console.log("missing")
+        missing.addEventListener("click", ()=>{
+            console.log("Clicked missing")
+            send("find")
+        });
+    }
    
-    missing.addEventListener('click', send("find"));
-    reset.addEventListener('click', send("clear"));
-}, false)
+    if(reset){
+        reset.addEventListener("click", ()=>{
+            console.log("Clicked reset")
+            send("clear")
+        });
+    }
+    
+});
 
 
 //Sends a request to content.js 

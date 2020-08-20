@@ -6,15 +6,12 @@ const myStorage = window.localStorage;
 
 //Add Check for Playlist Page vs Watching Playlist Later here
 const videos = document.querySelectorAll("a.ytd-playlist-video-renderer");
-let DW = true
+//True if playlist is set to Watch, False if you're not watching the playlist
+let watch = false
 
-console.log("DW is " + DW)
 chrome.storage.sync.get(playListId, (playlist) =>{
     //Check if list is stored 
     if(Object.keys(playlist).length === 0 && playlist.constructor === Object){
-        DW = false
-        console.log("DW is " + DW)
-        console
          //Prompt user to watch playlist 
         if(confirm("This playlist is not being watched would you like to watch this playlist?")){
             chrome.storage.sync.set({[playListId] : createPlaylist()})
@@ -24,6 +21,7 @@ chrome.storage.sync.get(playListId, (playlist) =>{
     }else if(playlist !== "Don't Watch"){
     //Check for updates 
     //const prevList = playlist)
+    watch=true
     checkForUpdates(playlist);
  }
 })
@@ -67,30 +65,42 @@ function createPlaylist(){
     return playList;
 }
 
+//Cannot run any of these commands if there are no videos present in the playlist 
 
-chrome.runtime.onMessage.addListener((request)=> {
-    if(request.from == 'popup' && request.target == 'content'){
-        switch(request.type){
-            case "find":
-                console.log("It has been requested that we find deleted videos")
-                
-                chrome.storage.sync.get(playListId, (playlist)=>{
-                    //if()
-                })
-                break
-            case "watch": 
-                break
-            case "stop":
-                break
-            case "clear":
-                console.log("It has been requested that this entry is cleared")
-                DW = true
-                console.log("DW is " + DW)
-                break
+if(videos){
+    chrome.runtime.onMessage.addListener((request)=> {
+        if(request.from == 'popup' && request.target == 'content'){
+            switch(request.type){
+                case "find":
+                    console.log("It has been requested that we find deleted videos")
+                    if(watch){
+                        chrome.storage.sync.get(playListId, (savedList)=>{
+                            let curr = createPlaylist();
+                            let keys = Object.keys(curr)
+                            let deleted = keys.filter(key => curr[key] != savedList[playListId][key])
+                            console.log(deleted)
+    
+    
+                        })
+                    }else{
+                        console.log("Playlist is not being watched")
+                    }
+                    break
+                case "watch": 
+                    break
+                case "stop":
+                    break
+                case "clear":
+                    console.log("It has been requested that this entry is cleared")
+                    break
+            }
         }
-    }
-   
-});
+       
+    });
+}else{
+    console.log("No videos found in this playlist");
+}
+
 
 
 function findDeletedVideos() {
@@ -104,7 +114,6 @@ function findDeletedVideos() {
             //Here we added the videoID titles plus Remove button here, but instead we'll just replace the video IDs
         }   
     } else {
-        //This Shouldn't Happen As There is Usually "Don't Watch within the playlist"
         console.log("No videos found in this playlist");
     }
 }
