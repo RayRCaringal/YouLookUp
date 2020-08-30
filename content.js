@@ -38,12 +38,14 @@ function checkForUpdates(prevList){
 
     //Item has been added 
     if(curr.length > prev.length){ 
+        console.log("Item has been added")
         const additions = curr.filter(video => !prev.includes(video))
         additions.forEach(newItems => prevList[newItems] = currentList[newItems])
         chrome.storage.sync.set({[playListId] : prevList})
     }
     //Item has been deleted (Keep Track of Deletions as a Future Option)
     else if(curr.length < prev.length){
+        console.log("Item has been deleted")
         const deletions = prev.filter(video => !curr.includes(video))
         deletions.forEach(deletedItem => delete prevList[deletedItem])    
         chrome.storage.sync.set({[playListId] : prevList})
@@ -79,19 +81,46 @@ if(videos){
                             let keys = Object.keys(curr)
                             let deleted = keys.filter(key => curr[key] != savedList[playListId][key])
                             console.log(deleted)
-    
+
+                            //Convert QuerySelector NodeList to Array to use Filter
+                            let video = Array.from(videos)
+
+                            //Check which NodeList Objects are inlucded within the List of deleted items based on Video Id
+                            let gone = video.filter(obj => deleted.includes(obj.href.substring(obj.href.indexOf('=')+1,obj.href.indexOf('&'))))
+                            //let gone = video.filter(obj => deleted.includes(obj.data.watchEndpoint.videoId))
+                            
+                            //This likely works but it has yet to be tested due to an issue with saving 
+                            gone.forEach(vid => {
+                                let url = vid.href
+                                let id = url.substring(url.indexOf('=')+1,url.indexOf('&'))
+                                vid.childNodes[3].childNodes[1].childNodes[3].innerText = curr[id]
+                            })
+                            console.log(gone)
     
                         })
                     }else{
                         console.log("Playlist is not being watched")
                     }
-                    break
+                    break  
                 case "watch": 
+                    chrome.storage.sync.set({[playListId] : createPlaylist()})
                     break
+                //For some reason this doesnt work right now   
                 case "stop":
                     break
                 case "clear":
                     console.log("It has been requested that this entry is cleared")
+                    chrome.storage.sync.remove(playListId,()=>{
+                        let e = chrome.runtime.lastError
+                        if(e){
+                            console.error(e)
+                        }
+                    })
+                    break
+                case "debug":
+                    chrome.storage.sync.get(playListId, (savedList)=>{
+                        console.log(savedList)
+                    })
                     break
             }
         }
@@ -99,44 +128,4 @@ if(videos){
     });
 }else{
     console.log("No videos found in this playlist");
-}
-
-
-
-function findDeletedVideos() {
-    if (videos) {
-        //const popup = document.getElementById("videoes") 
-        const deletedVideos = Array.from(videos).filter((e)=>{let title = e.innerText;});
-
-        if(deletedVideos.length > 0){
-            let videoIDs = getVideoIds(deletedVideos)
-            //let savedList = JSON.parse(myStorage.getItem(playListId))
-            //Here we added the videoID titles plus Remove button here, but instead we'll just replace the video IDs
-        }   
-    } else {
-        console.log("No videos found in this playlist");
-    }
-}
-
-
-//Filters non-deleted videos out of an array of video DOM elements
-function hasDeletion(value, index, array) {
-    let title = value.innerText;
-    if (!title) {
-        console.log("returning")
-        return false;
-    }
-    // This will break if YouTube formatting changes 
-    // In the future change this to a comparison with a videoId:Title Comparison
-    return (title.toLowerCase() == "[deleted video]");
-}
-
-/**
- Returns an array of video ids
- @param videoElements - an array of video DOM elements
-*/
-function getVideoIds(videoElements) {
-    let videoIds = videoElements.map((video) => video.search);
-    videoIds = videoIds.map((url) => url.substring(url.indexOf("=") + 1, url.indexOf("&")));
-    return videoIds;
 }
