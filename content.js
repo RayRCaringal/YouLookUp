@@ -34,7 +34,7 @@ chrome.storage.sync.get(playListId, (playlist) =>{
 function checkForUpdates(prevList){
     const currentList = createPlaylist();
     const curr = Object.keys(currentList);
-    const prev = Object.keys(prevList);
+    const prev = Object.keys(prevList[playListId]);
 
     //Item has been added 
     if(curr.length > prev.length){ 
