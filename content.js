@@ -36,19 +36,21 @@ function checkForUpdates(prevList){
     const curr = Object.keys(currentList);
     const prev = Object.keys(prevList[playListId]);
 
+
+    //There's an issue with how this is implemented causing the object to start nesting itself  
     //Item has been added 
     if(curr.length > prev.length){ 
         console.log("Item has been added")
         const additions = curr.filter(video => !prev.includes(video))
-        additions.forEach(newItems => prevList[newItems] = currentList[newItems])
-        chrome.storage.sync.set({[playListId] : prevList})
+        additions.forEach(newItems => prevList[playListId][newItems] = currentList[newItems])
+        chrome.storage.sync.set(prevList)
     }
     //Item has been deleted (Keep Track of Deletions as a Future Option)
     else if(curr.length < prev.length){
         console.log("Item has been deleted")
         const deletions = prev.filter(video => !curr.includes(video))
-        deletions.forEach(deletedItem => delete prevList[deletedItem])    
-        chrome.storage.sync.set({[playListId] : prevList})
+        deletions.forEach(deletedItem => delete prevList[playListId][deletedItem])    
+        chrome.storage.sync.set(prevList)
     }   
 }
 
