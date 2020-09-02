@@ -91,11 +91,10 @@ if(videos){
                             let gone = video.filter(obj => deleted.includes(obj.href.substring(obj.href.indexOf('=')+1,obj.href.indexOf('&'))))
                             //let gone = video.filter(obj => deleted.includes(obj.data.watchEndpoint.videoId))
                             
-                            //This likely works but it has yet to be tested due to an issue with saving 
                             gone.forEach(vid => {
                                 let url = vid.href
                                 let id = url.substring(url.indexOf('=')+1,url.indexOf('&'))
-                                vid.childNodes[3].childNodes[1].childNodes[3].innerText = curr[id]
+                                vid.childNodes[3].childNodes[1].childNodes[3].innerText = savedList[playListId][id]
                             })
                             console.log(gone)
     
@@ -105,7 +104,14 @@ if(videos){
                     }
                     break  
                 case "watch": 
-                    chrome.storage.sync.set({[playListId] : createPlaylist()})
+                    chrome.storage.sync.get(playListId, (savedList)=>{
+                        if(Object.values(savedList[playListId]) != "Don't Watch"){
+                            console.log("This is already being watched")
+                        }else{
+                            chrome.storage.sync.set({[playListId] : createPlaylist()})
+                            watch = true
+                        }
+                    })
                     break
                 //For some reason this doesnt work right now   
                 case "stop":
